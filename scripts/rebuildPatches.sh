@@ -58,6 +58,6 @@ function savePatches {
     echo "  Patches saved for $what to $what_name-Patches/"
 }
 
-savePatches "$basedir/Bukkit" "Copper-API"
-savePatches "$basedir/CraftBukkit" "Copper-Server"
+savePatches "$basedir/Canyon/Canyon-API" "Copper-API"
+savePatches "$basedir/Canyon/Canyon-Server" "Copper-Server"
 ) || exit 1

@@ -1,0 +1,167 @@
+From 1df57f7992bc74bf075bb7305bf9f06d857d369a Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Jakub=20Staro=C5=84?= <kubastaron@hotmail.com>
+Date: Sun, 15 Mar 2020 00:31:30 +0100
+Subject: [PATCH] Rebrand to Copper
+
+
+diff --git a/pom.xml b/pom.xml
+index 017a7ce1..da27636a 100644
+--- a/pom.xml
++++ b/pom.xml
+@@ -3,15 +3,15 @@
+   <modelVersion>4.0.0</modelVersion>
+   <parent>
+     <groupId>com.canyonmodded</groupId>
+-    <artifactId>canyon-parent</artifactId>
++    <artifactId>copper-parent</artifactId>
+     <version>1.7.3</version>
+     <relativePath>../pom.xml</relativePath>
+   </parent>
+-  <artifactId>canyon-server</artifactId>
++  <artifactId>copper-server</artifactId>
+   <packaging>jar</packaging>
+   <version>1.7.3</version>
+-  <name>Canyon-Server</name>
+-  <url>http://www.bukkit.org</url>
++  <name>Copper-Server</name>
++  <url>https://github.com/js6pak/copper</url>
+   <properties>
+     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+     <api.version>unknown</api.version>
+@@ -26,6 +26,12 @@
+       <id>bukkit-repo</id>
+       <url>https://repo.canyonmodded.com</url> <!-- Canyon: replace repo -->
+     </repository>
++    <!-- Copper start -->
++    <repository>
++      <id>jitpack.io</id>
++      <url>https://jitpack.io</url>
++    </repository>
++    <!-- Copper end -->
+   </repositories>
+   <pluginRepositories>
+     <pluginRepository>
+@@ -36,7 +42,7 @@
+   <dependencies>
+     <dependency>
+       <groupId>com.canyonmodded</groupId>
+-      <artifactId>canyon-api</artifactId>
++      <artifactId>copper-api</artifactId>
+       <version>1.7.3</version>
+       <type>jar</type>
+       <scope>compile</scope>
+@@ -99,6 +105,13 @@
+       <scope>compile</scope>
+       <classifier>osx-x86_64</classifier>
+     </dependency>
++    <!-- Copper start -->
++    <dependency>
++      <groupId>com.github.js6pak</groupId>
++      <artifactId>Tiny-Remapper</artifactId>
++      <version>master-SNAPSHOT</version>
++    </dependency>
++    <!-- Copper end -->
+   </dependencies>
+   <!-- This builds a completely 'ready to start' jar with all dependencies inside -->
+   <build>
+@@ -147,7 +160,7 @@
+           <archive>
+             <manifestEntries>
+               <Main-Class>org.bukkit.craftbukkit.Main</Main-Class>
+-              <Implementation-Title>Canyon</Implementation-Title>
++              <Implementation-Title>Copper</Implementation-Title>
+               <Implementation-Version>${describe}</Implementation-Version>
+               <Implementation-Vendor>Canyon Team</Implementation-Vendor>
+               <Specification-Title>Bukkit</Specification-Title>
+diff --git a/src/main/java/com/canyonmodded/copper/commands/CopperCommand.java b/src/main/java/com/canyonmodded/copper/commands/CopperCommand.java
+new file mode 100644
+index 00000000..baea7b60
+--- /dev/null
++++ b/src/main/java/com/canyonmodded/copper/commands/CopperCommand.java
+@@ -0,0 +1,36 @@
++package com.canyonmodded.copper.commands;
++
++import modloader.BaseMod;
++import modloader.ModLoader;
++import org.bukkit.ChatColor;
++import org.bukkit.command.Command;
++import org.bukkit.command.CommandSender;
++
++import java.util.Arrays;
++import java.util.List;
++import java.util.stream.Collectors;
++
++public class CopperCommand extends Command {
++    public CopperCommand() {
++        super("copper");
++
++        this.description = "Copper is a Canyon, i think";
++        this.usageMessage = "/copper mods";
++        this.setAliases(Arrays.asList("copper", "modloader", "modloadermp", "mods", "forge"));
++    }
++
++    @Override
++    public boolean execute(CommandSender sender, String currentAlias, String[] args) {
++        if(args.length > 0) {
++            switch (args[0]) {
++                case "mods":
++                    List<BaseMod> mods = ModLoader.getLoadedMods();
++                    sender.sendMessage("Mods (" + mods.size() + "): " + mods.stream().map(x->ChatColor.GREEN + x.getClass().getSimpleName().replaceFirst("mod_", "") + " " + x.Version()).collect(Collectors.joining(ChatColor.WHITE + ", ")));
++                    return true;
++            }
++        }
++
++        sender.sendMessage(ChatColor.RED + "Correct command usage: " + ChatColor.WHITE + usageMessage);
++        return false;
++    }
++}
+diff --git a/src/main/java/org/bukkit/craftbukkit/CraftServer.java b/src/main/java/org/bukkit/craftbukkit/CraftServer.java
+index 08d1406f..33cd4193 100644
+--- a/src/main/java/org/bukkit/craftbukkit/CraftServer.java
++++ b/src/main/java/org/bukkit/craftbukkit/CraftServer.java
+@@ -3,6 +3,7 @@ package org.bukkit.craftbukkit;
+ import java.io.FileNotFoundException;
+ 
+ import com.canyonmodded.config.CanyonConfig;
++import com.canyonmodded.copper.commands.CopperCommand;
+ import com.canyonmodded.scheduler.CanyonScheduler;
+ import org.bukkit.generator.ChunkGenerator;
+ import com.avaje.ebean.config.DataSourceConfig;
+@@ -80,7 +81,7 @@ import org.yaml.snakeyaml.constructor.SafeConstructor;
+ import org.yaml.snakeyaml.error.MarkedYAMLException;
+ 
+ public final class CraftServer implements Server {
+-    private final String serverName = "Canyon";
++    private final String serverName = "Copper"; // Copper
+     private final String serverVersion;
+     private final String protocolVersion = "1.7.3";
+     private final ServicesManager servicesManager = new SimpleServicesManager();
+@@ -106,6 +107,8 @@ public final class CraftServer implements Server {
+         enablePlugins(PluginLoadOrder.STARTUP);
+ 
+         ChunkCompressionThread.startThread();
++
++        commandMap.register("copper", new CopperCommand()); // Copper
+     }
+ 
+     private void loadConfig() {
+@@ -193,7 +196,7 @@ public final class CraftServer implements Server {
+     }
+ 
+     public String getVersion() {
+-        return serverVersion + " (MC: " + protocolVersion + ")";
++        return (serverVersion == null ? "dev" : serverVersion) + " (MC: " + protocolVersion + ")"; // Copper
+     }
+ 
+     @SuppressWarnings("unchecked")
+@@ -378,6 +381,7 @@ public final class CraftServer implements Server {
+ 
+         pluginManager.clearPlugins();
+         commandMap.clearCommands();
++        commandMap.register("copper", new CopperCommand()); // Copper
+ 
+         int pollCount = 0;
+ 
+-- 
+2.24.1.windows.2
+

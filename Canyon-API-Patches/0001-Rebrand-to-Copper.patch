@@ -1,0 +1,51 @@
+From 7883b3122aa0f53170bc1dd4614102ded502615b Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Jakub=20Staro=C5=84?= <kubastaron@hotmail.com>
+Date: Sun, 15 Mar 2020 00:17:05 +0100
+Subject: [PATCH] Rebrand to Copper
+
+
+diff --git a/pom.xml b/pom.xml
+index d93fa53b..bb3f9806 100644
+--- a/pom.xml
++++ b/pom.xml
+@@ -2,17 +2,17 @@
+     <modelVersion>4.0.0</modelVersion>
+     <parent>
+         <groupId>com.canyonmodded</groupId>
+-        <artifactId>canyon-parent</artifactId>
++        <artifactId>copper-parent</artifactId>
+         <version>1.7.3</version>
+         <relativePath>../pom.xml</relativePath>
+     </parent>
+-    <artifactId>canyon-api</artifactId>
++    <artifactId>copper-api</artifactId>
+     <version>1.7.3</version>
+-    <name>Canyon-API</name>
++    <name>Copper-API</name>
+     <properties>
+         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+     </properties>
+-    <url>http://www.bukkit.org</url>
++    <url>https://github.com/js6pak/copper</url>
+     <scm>
+         <developerConnection>scm:git:git@github.com:Bukkit/Bukkit.git</developerConnection>
+         <connection>scm:git:git://github.com/Bukkit/Bukkit.git</connection>
+diff --git a/src/main/java/org/bukkit/command/defaults/VersionCommand.java b/src/main/java/org/bukkit/command/defaults/VersionCommand.java
+index d780cfc9..ba99d93f 100644
+--- a/src/main/java/org/bukkit/command/defaults/VersionCommand.java
++++ b/src/main/java/org/bukkit/command/defaults/VersionCommand.java
+@@ -25,7 +25,10 @@ public class VersionCommand extends Command {
+         
+         if (args.length == 0) {
+             sender.sendMessage("This server is running " + ChatColor.GREEN + Bukkit.getName() + ChatColor.WHITE + " version " + ChatColor.GREEN + Bukkit.getVersion());
+-//            sender.sendMessage("This server is also sporting some funky dev build of Bukkit!"); // Canyon - all builds are dev builds
++            // Copper start
++//            sender.sendMessage("This server is also sporting some funky dev build of Bukkit!");
++            sender.sendMessage("This server is also sporting modloaded fork of Canyon!");
++            // Copper end
+         } else {
+             StringBuilder name = new StringBuilder();
+ 
+-- 
+2.24.1.windows.2
+

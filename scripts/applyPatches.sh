@@ -67,6 +67,16 @@ function applyPatch {
     fi
 }
 
+# Move into canyon dir
+cd "Canyon"
+basedir=$(pwd)
+# Apply Canyon
+echo "Building Canyon"
+./canyon j
+# Move out of Canyon
+basedir="$1"
+cd "$basedir"
+
 echo "Importing MC Dev"
 
 ./scripts/importmcdev.sh "$basedir"
@@ -74,10 +84,10 @@ echo "Importing MC Dev"
 # Apply Canyon
 cd "$basedir"
 (
-    applyPatch "Bukkit" Canyon-API HEAD &&
-    applyPatch "CraftBukkit" Canyon-Server HEAD
+    applyPatch "Canyon/Canyon-API" Copper-API HEAD &&
+    applyPatch "Canyon/Canyon-Server" Copper-Server HEAD
 ) || (
-    echo "Failed to apply Canyon Patches"
+    echo "Failed to apply Copper Patches"
     exit 1
 ) || exit 1
 ) || exit 1

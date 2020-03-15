@@ -9,13 +9,13 @@ basedir="$(cd "$1" && pwd -P)"
 gitcmd="git -c commit.gpgsign=false"
 
 workdir="$basedir/work"
-decompiledir="$basedir/mc-dev/"
+decompiledir="$basedir/Canyon/mc-dev"
 
 export importedmcdev=""
 function import {
     export importedmcdev="$importedmcdev $1"
     file="${1}.java"
-    target="$basedir/CraftBukkit/src/main/java/$nms/$file"
+    target="$basedir/Canyon/CraftBukkit/src/main/java/$nms/$file"
     base="$decompiledir/$nms/$file"
 
     if [[ ! -f "$target" ]]; then
@@ -28,7 +28,7 @@ function import {
 }
 
 (
-    cd "$basedir/CraftBukkit"
+    cd "$basedir/Canyon/CraftBukkit"
     lastlog=$($gitcmd log -1 --oneline)
     if [[ "$lastlog" = *"mc-dev Imports"* ]]; then
         $gitcmd reset --hard HEAD^
@@ -43,7 +43,7 @@ import BlockTorch
 import ItemTool
 import MovingObjectPosition
 
-cd "$basedir/CraftBukkit"
+cd "$basedir/Canyon/CraftBukkit"
 $gitcmd add . -A >/dev/null 2>&1
 echo -e "mc-dev Imports\n\n$MODLOG" | $gitcmd commit . -F -
 )

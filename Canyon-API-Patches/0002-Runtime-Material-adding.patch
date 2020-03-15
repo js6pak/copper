@@ -1,0 +1,182 @@
+From 020eee6a0ea0001686150ab15560455e9dc70efa Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Jakub=20Staro=C5=84?= <kubastaron@hotmail.com>
+Date: Sun, 15 Mar 2020 00:08:27 +0100
+Subject: [PATCH] Runtime Material adding
+
+
+diff --git a/src/main/java/com/canyonmodded/copper/EnumHelper.java b/src/main/java/com/canyonmodded/copper/EnumHelper.java
+new file mode 100644
+index 00000000..5e847535
+--- /dev/null
++++ b/src/main/java/com/canyonmodded/copper/EnumHelper.java
+@@ -0,0 +1,60 @@
++package com.canyonmodded.copper;
++
++import com.google.common.primitives.Primitives;
++
++import java.lang.reflect.*;
++import java.util.Arrays;
++import java.util.Objects;
++
++public class EnumHelper {
++    // https://blog.gotofinal.com/java/diorite/breakingjava/2017/06/24/dynamic-enum.html
++    // TODO Make this work with java 9+ (ASM?)
++    @SuppressWarnings("unchecked")
++    public static <T extends Enum<?>> T addEnum(Class<T> enumClass, Object... params) {
++        try {
++            params = Arrays.stream(params).filter(Objects::nonNull).toArray();
++            Constructor<?> constructor = enumClass.getDeclaredConstructor(Arrays.stream(params).map(Object::getClass).map(Primitives::unwrap).toArray(Class<?>[]::new));
++            constructor.setAccessible(true);
++
++            Field constructorAccessorField = Constructor.class.getDeclaredField("constructorAccessor");
++            constructorAccessorField.setAccessible(true);
++            Object ca = constructorAccessorField.get(constructor);
++            if (ca == null) {
++                Method acquireConstructorAccessorMethod = Constructor.class.getDeclaredMethod("acquireConstructorAccessor");
++                acquireConstructorAccessorMethod.setAccessible(true);
++                ca = acquireConstructorAccessorMethod.invoke(constructor);
++            }
++
++
++            Method newInstanceMethod = ca.getClass().getDeclaredMethod("newInstance", Object[].class);
++            makeAccessible(newInstanceMethod);
++            T enumValue = (T) newInstanceMethod.invoke(ca, new Object[]{params});
++
++            Field $VALUESField = enumClass.getDeclaredField("$VALUES");
++            makeAccessible($VALUESField);
++            T[] oldValues = (T[]) $VALUESField.get(null);
++            T[] newValues = (T[]) Array.newInstance(enumClass, oldValues.length + 1);
++            System.arraycopy(oldValues, 0, newValues, 0, oldValues.length);
++            newValues[oldValues.length] = enumValue;
++            $VALUESField.set(null, newValues);
++
++            return enumValue;
++        }catch (Exception e) {
++            throw new RuntimeException("Failed to add enum to " + enumClass.getName(), e);
++        }
++    }
++
++    public static <T extends AccessibleObject> T makeAccessible(T accessibleObject) {
++        try {
++            accessibleObject.setAccessible(true);
++            Field modifiersField = accessibleObject.getClass().getDeclaredField("modifiers");
++            modifiersField.setAccessible(true);
++            Method getModifiersMethod = accessibleObject.getClass().getDeclaredMethod("getModifiers");
++            getModifiersMethod.setAccessible(true);
++            modifiersField.setInt(accessibleObject, (int) getModifiersMethod.invoke(accessibleObject) & ~Modifier.FINAL);
++        } catch (Exception e) {
++            throw new RuntimeException(e);
++        }
++        return accessibleObject;
++    }
++}
+\ No newline at end of file
+diff --git a/src/main/java/org/bukkit/Material.java b/src/main/java/org/bukkit/Material.java
+index f2624e13..3fb3d9f9 100644
+--- a/src/main/java/org/bukkit/Material.java
++++ b/src/main/java/org/bukkit/Material.java
+@@ -6,6 +6,9 @@ import java.util.HashMap;
+ import java.util.Map;
+ import java.util.logging.Level;
+ import java.util.logging.Logger;
++
++import com.canyonmodded.copper.EnumHelper;
++import com.google.common.base.CaseFormat;
+ import org.bukkit.material.*;
+ 
+ /**
+@@ -221,8 +224,8 @@ public enum Material {
+     private final Class<? extends MaterialData> data;
+     private static final Map<Integer, Material> lookupId = new HashMap<Integer, Material>();
+     private static final Map<String, Material> lookupName = new HashMap<String, Material>();
+-    private final int maxStack;
+-    private final short durability;
++    private int maxStack; // Copper - remove final
++    private short durability;  // Copper - remove final
+ 
+     private Material(final int id) {
+         this(id, 64);
+@@ -251,6 +254,71 @@ public enum Material {
+         this.data = data;
+     }
+ 
++    // Copper start
++    private boolean isModded;
++    private boolean isBlock;
++
++    public static Material addMaterial(final int id) {
++        return addMaterial(id, 64);
++    }
++
++    public static Material addBlock(final int id) {
++        Material material = addMaterial(id, 64);
++        material.isBlock = true;
++        return material;
++    }
++
++    public static Material addMaterial(final int id, final int stack) {
++        return addMaterial(id, stack, null);
++    }
++
++    public static Material addMaterial(final int id, final int stack, final int durability) {
++        return addMaterial(id, stack, durability, null);
++    }
++
++    public static Material addMaterial(final int id, final Class<? extends MaterialData> data) {
++        return addMaterial(id, 64, data);
++    }
++
++    public static Material addMaterial(final int id, final int stack, final Class<? extends MaterialData> data) {
++        return addMaterial(id, stack, -1, data);
++    }
++
++    public static Material addMaterial(int id, int stack, int durability, Class<? extends MaterialData> data) {
++        org.bukkit.Material material = org.bukkit.Material.getMaterial(id);
++        if(material == null) {
++            material = EnumHelper.addEnum(org.bukkit.Material.class, "MODDED_" + id, org.bukkit.Material.values().length, id, stack, durability, data);
++            material.isModded = true;
++            lookupId.put(material.getId(), material);
++            lookupName.put(material.name(), material);
++        }
++        return material;
++    }
++
++    public void setName(String name) {
++        name = CaseFormat.UPPER_CAMEL.to(CaseFormat.UPPER_UNDERSCORE, name);
++        try {
++            EnumHelper.makeAccessible(Enum.class.getDeclaredField("name")).set(this, name);
++        } catch (IllegalAccessException | NoSuchFieldException e) {
++            e.printStackTrace();
++        }
++        lookupName.put(name, this);
++    }
++
++    public void setMaxStack(int maxStack) {
++        this.maxStack = maxStack;
++    }
++
++    public void setDurability(short durability) {
++        this.durability = durability;
++    }
++
++    public boolean isModded() {
++        return isModded;
++    }
++
++    // Copper end
++
+     /**
+      * Gets the item ID or block ID of this Material
+      *
+@@ -326,7 +394,7 @@ public enum Material {
+      * @return true if this material is a block
+      */
+     public boolean isBlock() {
+-        return id < 256;
++        return id < 256 || isBlock;
+     }
+ 
+     /**
+-- 
+2.24.1.windows.2
+
